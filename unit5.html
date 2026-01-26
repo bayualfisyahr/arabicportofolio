@@ -1,0 +1,873 @@
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Gamepad2, Grid3X3, Layers, CheckCircle, Users, Trophy, RefreshCcw, ArrowRight, Star, Home, HelpCircle, ChevronRight, Clock } from 'lucide-react';
+
+// --- DATA MATERI (UNIT 1-5 & ANGKA QURAN) ---
+const vocabularyData = [
+  // Unit 1 & 2 (Perkenalan)
+  { id: 1, arabic: "السَّلَامُ عَلَيْكُمْ", indo: "Semoga keselamatan bagimu", category: "salam", unit: 1 },
+  { id: 2, arabic: "وَعَلَيْكُمُ السَّلَامُ", indo: "Dan bagimu keselamatan", category: "salam", unit: 1 },
+  { id: 3, arabic: "اِسْمِي", indo: "Namaku", category: "perkenalan", unit: 1 },
+  { id: 4, arabic: "مَا اسْمُكَ ؟", indo: "Siapa namamu? (Lk)", category: "perkenalan", unit: 1 },
+  { id: 5, arabic: "مَا اسْمُكِ ؟", indo: "Siapa namamu? (Pr)", category: "perkenalan", unit: 2 },
+  { id: 6, arabic: "مَعَ السَّلَامَةِ", indo: "Selamat tinggal", category: "salam", unit: 2 },
+  
+  // Unit 3 & 4 (Kabar)
+  { id: 7, arabic: "كَيْفَ حَالُكَ ؟", indo: "Bagaimana kabarmu? (Lk)", category: "kabar", unit: 3 },
+  { id: 8, arabic: "بِخَيْرٍ", indo: "Baik", category: "kabar", unit: 3 },
+  { id: 9, arabic: "أَنَا", indo: "Saya", category: "pronoun", unit: 3 },
+  { id: 10, arabic: "أَنْتَ", indo: "Kamu (Lk)", category: "pronoun", unit: 3 },
+  { id: 11, arabic: "أَنْتِ", indo: "Kamu (Pr)", category: "pronoun", unit: 4 },
+  { id: 12, arabic: "الْحَمْدُ لِلَّهِ", indo: "Segala puji bagi Allah", category: "ungkapan", unit: 3 },
+
+  // Unit 5 (Angka & Benda) - FOKUS UTAMA
+  { id: 13, arabic: "وَاحِدٌ", indo: "Satu", category: "angka", unit: 5 },
+  { id: 14, arabic: "اِثْنَانِ", indo: "Dua", category: "angka", unit: 5 },
+  { id: 15, arabic: "ثَلَاثَةٌ", indo: "Tiga", category: "angka", unit: 5 },
+  { id: 16, arabic: "أَرْبَعَةٌ", indo: "Empat", category: "angka", unit: 5 },
+  { id: 17, arabic: "خَمْسَةٌ", indo: "Lima", category: "angka", unit: 5 },
+  { id: 18, arabic: "هَاتِ", indo: "Berikan / Ambilkan", category: "perintah", unit: 5 },
+  { id: 19, arabic: "قَلَمٌ", indo: "Pena", category: "benda", unit: 5 },
+  
+  // Tambahan dari PDF Quran (Angka Lanjutan)
+  { id: 20, arabic: "سِتَّةٌ", indo: "Enam", category: "angka", unit: 5 },
+  { id: 21, arabic: "سَبْعَةٌ", indo: "Tujuh", category: "angka", unit: 5 },
+  { id: 22, arabic: "ثَمَانِيَةٌ", indo: "Delapan", category: "angka", unit: 5 },
+  { id: 23, arabic: "تِسْعَةٌ", indo: "Sembilan", category: "angka", unit: 5 },
+  { id: 24, arabic: "عَشَرَةٌ", indo: "Sepuluh", category: "angka", unit: 5 },
+];
+
+// --- DATA KUIS DARI PDF "ANGKA DALAM AL-QUR'AN" ---
+const quranQuizData = [
+  {
+    id: 1,
+    verse: "مَا يَكُونُ مِن نَّجْوَىٰ ثَلَاثَةٍ",
+    question: "Angka berapa yang disebutkan dalam ayat ini?",
+    options: ["Satu (1)", "Tiga (3)", "Lima (5)", "Tujuh (7)"],
+    correctIndex: 1, // Tiga
+    highlight: "ثَلَاثَةٍ"
+  },
+  {
+    id: 2,
+    verse: "خَمْسَةٍ إِلَّا هُوَ سَادِسُهُمْ",
+    question: "Angka berapa yang disebutkan dalam ayat ini?",
+    options: ["Empat (4)", "Lima (5)", "Enam (6)", "Delapan (8)"],
+    correctIndex: 1, // Lima
+    highlight: "خَمْسَةٍ"
+  },
+  {
+    id: 3,
+    verse: "خَلَقَ السَّمَاوَاتِ وَالْأَرْضَ فِي سِتَّةِ أَيَّامٍ",
+    question: "Berapa hari penciptaan langit dan bumi dalam ayat ini?",
+    options: ["Lima (5)", "Enam (6)", "Tujuh (7)", "Sembilan (9)"],
+    correctIndex: 1, // Enam
+    highlight: "سِتَّةِ"
+  },
+  {
+    id: 4,
+    verse: "وَيَحْمِلُ عَرْشَ رَبِّكَ فَوْقَهُمْ يَوْمَئِذٍ ثَمَانِيَةٌ",
+    question: "Berapa malaikat yang memikul Arsy?",
+    options: ["Tujuh (7)", "Delapan (8)", "Sembilan (9)", "Sepuluh (10)"],
+    correctIndex: 1, // Delapan
+    highlight: "ثَمَانِيَةٌ"
+  },
+  {
+    id: 5,
+    verse: "فَصِيَامُ ثَلَاثَةِ أَيَّامٍ فِي الْحَجِّ",
+    question: "Berapa hari puasa saat haji yang disebut di sini?",
+    options: ["Satu (1)", "Dua (2)", "Tiga (3)", "Empat (4)"],
+    correctIndex: 2, // Tiga
+    highlight: "ثَلَاثَةِ"
+  },
+  {
+    id: 6,
+    verse: "وَسَبْعَةٍ إِذَا رَجَعْتُمْ تِلْكَ عَشَرَةٌ كَامِلَةٌ",
+    question: "Ada dua angka di ayat ini, yaitu...",
+    options: ["3 dan 7", "5 dan 10", "7 dan 10", "6 dan 8"],
+    correctIndex: 2, // 7 dan 10
+    highlight: "سَبْعَةٍ ... عَشَرَةٌ"
+  },
+  {
+    id: 7,
+    verse: "وَإِلَهُكُمْ إِلَهٌ وَاحِدٌ",
+    question: "Berapa Tuhan yang disebutkan dalam ayat ini?",
+    options: ["Satu (1)", "Dua (2)", "Tiga (3)", "Esa"],
+    correctIndex: 0, // Satu
+    highlight: "وَاحِدٌ"
+  },
+  {
+    id: 8,
+    verse: "لَهَا سَبْعَةُ أَبْوَابٍ",
+    question: "Berapa jumlah pintu yang disebutkan?",
+    options: ["Lima (5)", "Enam (6)", "Tujuh (7)", "Delapan (8)"],
+    correctIndex: 2, // Tujuh
+    highlight: "سَبْعَةُ"
+  },
+  {
+    id: 9,
+    verse: "وَكَانَ فِي الْمَدِينَةِ تِسْعَةُ رَهْطٍ",
+    question: "Berapa orang yang membuat kerusakan di kota?",
+    options: ["Tujuh (7)", "Delapan (8)", "Sembilan (9)", "Sepuluh (10)"],
+    correctIndex: 2, // Sembilan
+    highlight: "تِسْعَةُ"
+  }
+];
+
+const units = [
+  { id: 1, title: "Unit 1: Perkenalan (Lk)", desc: "Ismi Muhammad" },
+  { id: 2, title: "Unit 2: Perkenalan (Pr)", desc: "Ismi Khadijah" },
+  { id: 3, title: "Unit 3: Kabar (Lk)", desc: "Kayfa Haluka" },
+  { id: 4, title: "Unit 4: Kabar (Pr)", desc: "Kayfa Haluki" },
+  { id: 5, title: "Unit 5: Angka & Benda", desc: "Wahid - Khamsah" },
+];
+
+// --- KOMPONEN UTAMA ---
+
+export default function App() {
+  const [view, setView] = useState('home'); // home, learn, quiz-quran, game-tictactoe, game-charades, game-match, game-group
+
+  const renderView = () => {
+    switch(view) {
+      case 'home': return <HomeMenu setView={setView} />;
+      case 'learn': return <LearningMode setView={setView} />;
+      case 'quiz-quran': return <QuranQuiz setView={setView} />;
+      case 'game-tictactoe': return <TicTacToe setView={setView} />;
+      case 'game-charades': return <Charades setView={setView} />;
+      case 'game-match': return <MatchGame setView={setView} />;
+      case 'game-group': return <GroupingGame setView={setView} />;
+      default: return <HomeMenu setView={setView} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+      {/* Header */}
+      <header className="bg-emerald-600 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+            <BookOpen className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Al-Arabiyyah Unit 1-5</h1>
+          </div>
+          {view !== 'home' && (
+            <button onClick={() => setView('home')} className="p-2 bg-emerald-700 rounded-full hover:bg-emerald-800 transition">
+              <Home className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto p-4">
+        {renderView()}
+      </main>
+    </div>
+  );
+}
+
+// --- HOME MENU ---
+const HomeMenu = ({ setView }) => (
+  <div className="space-y-6 animate-fade-in">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center">
+      <h2 className="text-2xl font-bold text-emerald-700 mb-2">Ahlan Wa Sahlan!</h2>
+      <p className="text-slate-600">Selamat datang di portal belajar Bahasa Arab.</p>
+      <div className="mt-4 inline-block bg-amber-100 text-amber-800 px-4 py-2 rounded-full font-medium text-sm">
+        Fokus Hari Ini: Unit 5 (Angka)
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Learning Card */}
+      <div 
+        onClick={() => setView('learn')}
+        className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 cursor-pointer hover:shadow-md transition group"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 bg-emerald-100 rounded-lg text-emerald-600">
+            <BookOpen className="h-8 w-8" />
+          </div>
+          <ArrowRight className="text-slate-300 group-hover:text-emerald-500 transition" />
+        </div>
+        <h3 className="text-xl font-bold mb-1">Materi Pembelajaran</h3>
+        <p className="text-sm text-slate-500">Pelajari kosakata dan angka dari Unit 1 sampai 5.</p>
+      </div>
+
+      {/* NEW: Quiz Card */}
+      <div 
+        onClick={() => setView('quiz-quran')}
+        className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-amber-500 cursor-pointer hover:shadow-md transition group"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 bg-amber-100 rounded-lg text-amber-600">
+            <HelpCircle className="h-8 w-8" />
+          </div>
+          <ArrowRight className="text-slate-300 group-hover:text-amber-500 transition" />
+        </div>
+        <h3 className="text-xl font-bold mb-1">Kuis Al-Qur'an</h3>
+        <p className="text-sm text-slate-500">Tebak angka yang tersembunyi dalam ayat-ayat Al-Qur'an (Dari PDF).</p>
+      </div>
+
+      {/* Games Grid */}
+      <div className="col-span-1 md:col-span-2">
+        <h3 className="font-bold text-slate-700 mb-3 ml-1">Zona Permainan</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <GameCard 
+            title="Tic Tac Toe" 
+            icon={<Grid3X3 />} 
+            color="bg-blue-100 text-blue-600" 
+            onClick={() => setView('game-tictactoe')} 
+            />
+            <GameCard 
+            title="Tebak Kata" 
+            icon={<Users />} 
+            color="bg-purple-100 text-purple-600" 
+            onClick={() => setView('game-charades')} 
+            />
+            <GameCard 
+            title="Match Kata" 
+            icon={<RefreshCcw />} 
+            color="bg-orange-100 text-orange-600" 
+            onClick={() => setView('game-match')} 
+            />
+            <GameCard 
+            title="Kelompok Kata" 
+            icon={<Layers />} 
+            color="bg-pink-100 text-pink-600" 
+            onClick={() => setView('game-group')} 
+            />
+        </div>
+      </div>
+    </div>
+    
+    <div className="mt-4 bg-slate-100 p-4 rounded-lg">
+      <h3 className="font-bold text-slate-700 mb-3">Ringkasan Unit:</h3>
+      <div className="space-y-2">
+        {units.map(u => (
+          <div key={u.id} className="flex items-center text-sm bg-white p-2 rounded border border-slate-200">
+            <span className="w-6 h-6 flex items-center justify-center bg-emerald-600 text-white rounded-full text-xs font-bold mr-3">{u.id}</span>
+            <span className="font-medium flex-1">{u.title}</span>
+            <span className="text-slate-400 text-xs hidden sm:block">{u.desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const GameCard = ({ title, icon, color, onClick }) => (
+  <div onClick={onClick} className="bg-white p-4 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-300 hover:shadow-md transition flex flex-col items-center text-center gap-3">
+    <div className={`p-3 rounded-full ${color}`}>
+      {icon}
+    </div>
+    <span className="font-semibold text-sm">{title}</span>
+  </div>
+);
+
+// --- NEW FEATURE: QURAN QUIZ ---
+const QuranQuiz = ({ setView }) => {
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [isCorrect, setIsCorrect] = useState(null);
+
+  const question = quranQuizData[currentQuestionIdx];
+
+  const handleOptionClick = (index) => {
+    if (selectedOption !== null) return; // Prevent double click
+
+    setSelectedOption(index);
+    const correct = index === question.correctIndex;
+    setIsCorrect(correct);
+    
+    if (correct) setScore(score + 1);
+
+    setTimeout(() => {
+      if (currentQuestionIdx < quranQuizData.length - 1) {
+        setCurrentQuestionIdx(currentQuestionIdx + 1);
+        setSelectedOption(null);
+        setIsCorrect(null);
+      } else {
+        setShowResult(true);
+      }
+    }, 1500);
+  };
+
+  const restartQuiz = () => {
+    setCurrentQuestionIdx(0);
+    setScore(0);
+    setShowResult(false);
+    setSelectedOption(null);
+    setIsCorrect(null);
+  };
+
+  if (showResult) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <Trophy className="h-20 w-20 text-yellow-400 mb-4 animate-bounce" />
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Kuis Selesai!</h2>
+        <p className="text-lg text-slate-600 mb-6">Kamu menjawab benar <span className="font-bold text-emerald-600">{score}</span> dari <span className="font-bold">{quranQuizData.length}</span> soal.</p>
+        <div className="flex gap-4">
+          <button onClick={restartQuiz} className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700">Ulangi Kuis</button>
+          <button onClick={() => setView('home')} className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-bold hover:bg-slate-300">Ke Menu Utama</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-amber-700">Kuis Angka Al-Qur'an</h2>
+        <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">
+          {currentQuestionIdx + 1} / {quranQuizData.length}
+        </span>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
+        <div className="bg-amber-50 p-8 text-center border-b border-amber-100">
+          <p className="text-3xl font-bold text-slate-800 font-arabic leading-loose mb-4">
+            {question.verse}
+          </p>
+          <p className="text-slate-600 text-sm font-medium">{question.question}</p>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {question.options.map((option, idx) => {
+            let btnClass = "w-full p-4 text-left border rounded-xl transition font-medium flex justify-between items-center ";
+            
+            if (selectedOption === null) {
+              btnClass += "hover:bg-amber-50 border-slate-200 hover:border-amber-300";
+            } else if (idx === question.correctIndex) {
+              btnClass += "bg-green-100 border-green-500 text-green-800";
+            } else if (selectedOption === idx) {
+              btnClass += "bg-red-100 border-red-500 text-red-800";
+            } else {
+              btnClass += "opacity-50 border-slate-100";
+            }
+
+            return (
+              <button
+                key={idx}
+                onClick={() => handleOptionClick(idx)}
+                disabled={selectedOption !== null}
+                className={btnClass}
+              >
+                <span>{option}</span>
+                {selectedOption !== null && idx === question.correctIndex && <CheckCircle className="h-5 w-5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      
+      {selectedOption !== null && (
+        <div className="mt-4 text-center p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-200">
+          Kata kuncinya adalah: <span className="font-bold font-arabic text-lg mx-1">{question.highlight}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- LEARNING MODE (FOCUS UNIT 5) ---
+const LearningMode = ({ setView }) => {
+  const [activeTab, setActiveTab] = useState('numbers'); // numbers, vocab
+
+  const numbers = vocabularyData.filter(v => v.category === 'angka');
+  const others = vocabularyData.filter(v => v.category !== 'angka');
+
+  return (
+    <div className="space-y-6 pb-20">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-slate-800">Pelajaran Hari Ini: Angka</h2>
+        <div className="flex bg-slate-200 rounded-lg p-1">
+          <button 
+            onClick={() => setActiveTab('numbers')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'numbers' ? 'bg-white shadow text-emerald-700' : 'text-slate-600'}`}
+          >
+            Angka (Unit 5)
+          </button>
+          <button 
+            onClick={() => setActiveTab('vocab')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'vocab' ? 'bg-white shadow text-emerald-700' : 'text-slate-600'}`}
+          >
+            Kosakata Lain
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'numbers' && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {numbers.map(item => (
+              <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:border-emerald-400 transition transform hover:-translate-y-1">
+                <div className="bg-emerald-50 p-6 flex items-center justify-center h-32">
+                  <span className="text-4xl font-bold text-emerald-800 font-arabic">{item.arabic}</span>
+                </div>
+                <div className="p-4 text-center">
+                  <p className="font-bold text-slate-700">{item.indo}</p>
+                  <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider">{item.category}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 bg-amber-50 p-6 rounded-xl border border-amber-200 flex items-start gap-4 cursor-pointer hover:shadow-md transition" onClick={() => setView('quiz-quran')}>
+             <div className="bg-amber-100 p-3 rounded-full text-amber-600 mt-1">
+                <HelpCircle className="h-6 w-6" />
+             </div>
+             <div>
+                <h4 className="font-bold text-amber-800 text-lg">Sudah hafal angkanya?</h4>
+                <p className="text-amber-700 mb-2">Uji kemampuanmu mengenali angka di dalam ayat Al-Qur'an sekarang!</p>
+                <span className="text-sm font-bold text-amber-600 underline">Mulai Kuis Sekarang &rarr;</span>
+             </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'vocab' && (
+        <div className="space-y-4">
+          {others.map(item => (
+            <div key={item.id} className="bg-white p-4 rounded-lg border border-slate-200 flex justify-between items-center">
+               <div>
+                  <p className="text-sm text-slate-500 mb-1">Unit {item.unit}</p>
+                  <p className="font-medium">{item.indo}</p>
+               </div>
+               <div className="text-right">
+                  <p className="text-2xl font-bold text-emerald-700 font-arabic">{item.arabic}</p>
+               </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- GAME 1: TIC TAC TOE (EDUCATIONAL) ---
+const TicTacToe = () => {
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [isXNext, setIsXNext] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [pendingIndex, setPendingIndex] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [winner, setWinner] = useState(null);
+  
+  // State baru untuk Timer
+  const [timeLeft, setTimeLeft] = useState(8);
+
+  const checkWinner = (squares) => {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6],
+    ];
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
+      }
+    }
+    return null;
+  };
+
+  // Effect untuk Timer
+  useEffect(() => {
+    let timer;
+    if (modalOpen && timeLeft > 0) {
+      timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (modalOpen && timeLeft === 0) {
+      handleTimeout();
+    }
+    return () => clearTimeout(timer);
+  }, [modalOpen, timeLeft]);
+
+  // Handler jika waktu habis
+  const handleTimeout = () => {
+    setModalOpen(false);
+    setIsXNext(!isXNext); // Ganti giliran
+    alert("Waktu Habis! Giliran berpindah ke pemain lain.");
+    setPendingIndex(null);
+  };
+
+  const handleCellClick = (index) => {
+    if (board[index] || winner) return;
+    
+    // Generate question based on Unit 1-5
+    const randomItem = vocabularyData[Math.floor(Math.random() * vocabularyData.length)];
+    const distractors = vocabularyData
+        .filter(i => i.id !== randomItem.id)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+    
+    const options = [randomItem, ...distractors].sort(() => 0.5 - Math.random());
+
+    setCurrentQuestion({
+      item: randomItem,
+      options: options
+    });
+    setPendingIndex(index);
+    setTimeLeft(8); // Reset timer ke 8 detik
+    setModalOpen(true);
+  };
+
+  const handleAnswer = (selectedId) => {
+    if (selectedId === currentQuestion.item.id) {
+      const newBoard = [...board];
+      newBoard[pendingIndex] = isXNext ? 'X' : 'O';
+      setBoard(newBoard);
+      setIsXNext(!isXNext);
+      setWinner(checkWinner(newBoard));
+    } else {
+      alert("Jawaban Salah! Giliran berpindah.");
+      setIsXNext(!isXNext);
+    }
+    setModalOpen(false);
+  };
+
+  const resetGame = () => {
+    setBoard(Array(9).fill(null));
+    setWinner(null);
+    setIsXNext(true);
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <h2 className="text-2xl font-bold mb-4 text-emerald-800">Tic Tac Toe Cerdas</h2>
+      <p className="text-sm text-slate-500 mb-6 text-center">Jawab pertanyaan sebelum waktu 8 detik habis!</p>
+      
+      {winner ? (
+        <div className="mb-6 p-4 bg-yellow-100 text-yellow-800 rounded-lg text-center animate-bounce">
+          <Trophy className="mx-auto h-8 w-8 mb-2" />
+          <h3 className="text-xl font-bold">Pemenang: {winner === 'X' ? 'Pemain 1' : 'Pemain 2'}!</h3>
+          <button onClick={resetGame} className="mt-2 text-sm underline">Main Lagi</button>
+        </div>
+      ) : (
+        <div className="mb-4 font-bold text-slate-700">
+          Giliran: <span className={isXNext ? "text-blue-600" : "text-red-600"}>{isXNext ? 'Pemain 1 (X)' : 'Pemain 2 (O)'}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3 bg-slate-200 p-3 rounded-xl">
+        {board.map((cell, i) => (
+          <button
+            key={i}
+            onClick={() => handleCellClick(i)}
+            className={`w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-lg text-4xl font-bold flex items-center justify-center shadow-sm transition hover:bg-slate-50 ${cell === 'X' ? 'text-blue-500' : 'text-red-500'}`}
+          >
+            {cell}
+          </button>
+        ))}
+      </div>
+
+      {modalOpen && currentQuestion && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-fade-in relative">
+            
+            {/* Timer Display */}
+            <div className={`absolute top-4 right-4 flex items-center gap-1 font-bold ${timeLeft <= 3 ? 'text-red-600 animate-pulse' : 'text-emerald-600'}`}>
+               <Clock className="w-5 h-5" />
+               <span>{timeLeft}s</span>
+            </div>
+
+            <h3 className="text-lg font-bold text-center mb-4 mt-2">Apa arti kata ini?</h3>
+            <div className="text-3xl font-bold text-emerald-600 text-center mb-6 font-arabic py-4 bg-emerald-50 rounded-lg">
+              {currentQuestion.item.arabic}
+            </div>
+            <div className="space-y-2">
+              {currentQuestion.options.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => handleAnswer(opt.id)}
+                  className="w-full p-3 text-left border rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition"
+                >
+                  {opt.indo}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- GAME 2: TEBAK KATA KELOMPOK (CHARADES) ---
+const Charades = () => {
+  const [gameState, setGameState] = useState('lobby'); // lobby, playing, finished
+  const [currentItem, setCurrentItem] = useState(null);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  
+  // Timer effect
+  useEffect(() => {
+    if (gameState === 'playing' && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0) {
+      setGameState('finished');
+    }
+  }, [timeLeft, gameState]);
+
+  const startGame = () => {
+    setScore(0);
+    setTimeLeft(60);
+    nextCard();
+    setGameState('playing');
+  };
+
+  const nextCard = () => {
+    const random = vocabularyData[Math.floor(Math.random() * vocabularyData.length)];
+    setCurrentItem(random);
+  };
+
+  const handleCorrect = () => {
+    setScore(score + 1);
+    nextCard();
+  };
+
+  return (
+    <div className="text-center max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-2 text-purple-700">Tebak Kata Kelompok</h2>
+      
+      {gameState === 'lobby' && (
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mt-6">
+          <Users className="h-16 w-16 mx-auto text-purple-300 mb-4" />
+          <p className="text-slate-600 mb-6">Satu orang memegang HP dan melihat kata, teman sekelompok memberikan petunjuk tanpa menyebutkan katanya!</p>
+          <button onClick={startGame} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition">
+            Mulai (60 Detik)
+          </button>
+        </div>
+      )}
+
+      {gameState === 'playing' && currentItem && (
+        <div className="mt-4">
+          <div className="flex justify-between items-center mb-4 px-4 font-bold text-slate-600">
+            <span>Skor: {score}</span>
+            <span className={timeLeft < 10 ? 'text-red-500' : ''}>{timeLeft}s</span>
+          </div>
+          
+          <div className="bg-white border-2 border-purple-500 rounded-3xl p-10 shadow-lg min-h-[300px] flex flex-col items-center justify-center transform rotate-0 sm:rotate-0">
+             <span className="text-xs text-slate-400 uppercase tracking-widest mb-2">Kata Kunci</span>
+             <h3 className="text-4xl sm:text-5xl font-bold text-slate-800 mb-4">{currentItem.indo}</h3>
+             <div className="w-full h-px bg-slate-200 my-4"></div>
+             <h3 className="text-4xl sm:text-5xl font-bold text-purple-600 font-arabic">{currentItem.arabic}</h3>
+          </div>
+
+          <div className="flex gap-4 mt-6">
+            <button onClick={nextCard} className="flex-1 py-4 bg-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-300">
+              Lewati
+            </button>
+            <button onClick={handleCorrect} className="flex-1 py-4 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 shadow-lg shadow-green-200">
+              Benar!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {gameState === 'finished' && (
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mt-6">
+          <Trophy className="h-16 w-16 mx-auto text-yellow-400 mb-4 animate-bounce" />
+          <h3 className="text-2xl font-bold text-slate-800">Waktu Habis!</h3>
+          <p className="text-4xl font-bold text-purple-600 my-4">{score} Poin</p>
+          <button onClick={startGame} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition">
+            Main Lagi
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- GAME 3: MATCH KATA (MEMORY) ---
+const MatchGame = () => {
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [disabled, setDisabled] = useState(false);
+
+  // Initialize game
+  useEffect(() => {
+    shuffleCards();
+  }, []);
+
+  const shuffleCards = () => {
+    // Select 6 random pairs from vocab
+    const selected = [...vocabularyData].sort(() => 0.5 - Math.random()).slice(0, 6);
+    
+    // Create pair: one arabic, one indo
+    const deck = selected.flatMap(item => [
+      { id: item.id, content: item.arabic, type: 'arabic', pairId: item.id, uniqueId: Math.random() },
+      { id: item.id, content: item.indo, type: 'indo', pairId: item.id, uniqueId: Math.random() }
+    ]);
+
+    setCards(deck.sort(() => 0.5 - Math.random()));
+    setFlipped([]);
+    setMatched([]);
+    setDisabled(false);
+  };
+
+  const handleClick = (card) => {
+    if (disabled) return;
+    if (flipped.find(c => c.uniqueId === card.uniqueId)) return; // prevent clicking same card
+    
+    const newFlipped = [...flipped, card];
+    setFlipped(newFlipped);
+
+    if (newFlipped.length === 2) {
+      setDisabled(true);
+      if (newFlipped[0].pairId === newFlipped[1].pairId) {
+        setMatched(prev => [...prev, newFlipped[0].pairId]);
+        setFlipped([]);
+        setDisabled(false);
+      } else {
+        setTimeout(() => {
+          setFlipped([]);
+          setDisabled(false);
+        }, 1000);
+      }
+    }
+  };
+
+  const isCompleted = matched.length === 6;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex justify-between w-full items-center mb-4">
+        <h2 className="text-2xl font-bold text-orange-700">Cocokkan Kata</h2>
+        <button onClick={shuffleCards} className="p-2 bg-orange-100 rounded-full text-orange-600 hover:bg-orange-200">
+          <RefreshCcw size={20} />
+        </button>
+      </div>
+
+      {isCompleted ? (
+         <div className="text-center p-8 bg-white rounded-xl shadow border border-orange-200">
+           <Star className="h-16 w-16 text-yellow-400 mx-auto mb-2 fill-current" />
+           <h3 className="text-xl font-bold mb-4">Luar Biasa!</h3>
+           <button onClick={shuffleCards} className="px-6 py-2 bg-orange-600 text-white rounded-lg font-bold">Main Lagi</button>
+         </div>
+      ) : (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 w-full">
+          {cards.map(card => {
+            const isFlipped = flipped.find(c => c.uniqueId === card.uniqueId) || matched.includes(card.pairId);
+            return (
+              <div 
+                key={card.uniqueId} 
+                onClick={() => handleClick(card)}
+                className={`aspect-square cursor-pointer relative perspective-1000`}
+              >
+                <div className={`w-full h-full transition-all duration-500 rounded-lg shadow-sm flex items-center justify-center p-2 text-center border-2 ${isFlipped ? (card.type === 'arabic' ? 'bg-orange-50 border-orange-400' : 'bg-white border-orange-400') : 'bg-orange-500 border-orange-600'}`}>
+                  {isFlipped ? (
+                    <span className={`font-bold ${card.type === 'arabic' ? 'font-arabic text-xl' : 'text-sm'}`}>
+                      {card.content}
+                    </span>
+                  ) : (
+                    <Layers className="text-white/50" />
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- GAME 4: KELOMPOKKAN KATA (GROUPING) ---
+const GroupingGame = () => {
+  const categories = [
+    { id: 'angka', label: 'Angka', color: 'bg-blue-500' },
+    { id: 'salam', label: 'Salam & Ungkapan', color: 'bg-green-500' },
+    { id: 'benda', label: 'Benda & Lainnya', color: 'bg-pink-500' }
+  ];
+
+  // Combine small categories for simpler game logic
+  const getSuperCategory = (cat) => {
+    if (cat === 'angka') return 'angka';
+    if (['salam', 'kabar', 'ungkapan', 'perkenalan'].includes(cat)) return 'salam';
+    return 'benda'; // benda, pronoun, perintah
+  };
+
+  const [queue, setQueue] = useState([]);
+  const [currentWord, setCurrentWord] = useState(null);
+  const [score, setScore] = useState(0);
+  const [feedback, setFeedback] = useState(null); // correct/wrong
+
+  useEffect(() => {
+    restartGame();
+  }, []);
+
+  const restartGame = () => {
+    const shuffled = [...vocabularyData].sort(() => 0.5 - Math.random());
+    setQueue(shuffled);
+    setCurrentWord(shuffled[0]);
+    setScore(0);
+    setFeedback(null);
+  };
+
+  const handleSort = (categoryId) => {
+    const correctCategory = getSuperCategory(currentWord.category);
+    
+    if (categoryId === correctCategory) {
+      setScore(score + 10);
+      setFeedback('correct');
+      setTimeout(() => {
+        setFeedback(null);
+        const nextQueue = queue.slice(1);
+        if (nextQueue.length > 0) {
+          setQueue(nextQueue);
+          setCurrentWord(nextQueue[0]);
+        } else {
+          setFeedback('finished');
+        }
+      }, 500);
+    } else {
+      setFeedback('wrong');
+      setTimeout(() => setFeedback(null), 500);
+    }
+  };
+
+  if (feedback === 'finished') {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow mt-10">
+        <h2 className="text-2xl font-bold text-pink-600">Selesai!</h2>
+        <p className="text-slate-600 my-4">Skor Akhir: {score}</p>
+        <button onClick={restartGame} className="px-6 py-2 bg-pink-600 text-white rounded-lg">Ulangi</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-md mx-auto relative h-[80vh] flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+         <h2 className="text-2xl font-bold text-pink-700">Kelompokkan!</h2>
+         <span className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full font-bold">{score} Pts</span>
+      </div>
+
+      {/* Floating Word Card */}
+      <div className="flex-1 flex items-center justify-center relative">
+        {currentWord && (
+          <div className={`w-64 h-64 bg-white rounded-2xl shadow-xl border-4 flex flex-col items-center justify-center p-6 transition-all duration-300 ${feedback === 'correct' ? 'scale-0 opacity-0 border-green-500' : feedback === 'wrong' ? 'border-red-500 animate-shake' : 'border-slate-100'}`}>
+            <h3 className="text-4xl font-bold text-slate-800 font-arabic mb-4">{currentWord.arabic}</h3>
+            <p className="text-slate-500 text-lg">{currentWord.indo}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Buckets */}
+      <div className="grid grid-cols-3 gap-2 mt-auto pb-4">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => handleSort(cat.id)}
+            className={`${cat.color} h-32 rounded-t-xl flex flex-col items-center justify-center text-white hover:opacity-90 active:scale-95 transition shadow-lg`}
+          >
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+               <ArrowRight className="rotate-90" />
+            </div>
+            <span className="font-bold text-sm sm:text-base">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
